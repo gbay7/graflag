@@ -1,0 +1,82 @@
+% --- Named Color Definitions ---
+\definecolor{clientBorder}{RGB}{70,110,180}
+\definecolor{clientBg}{RGB}{232,240,254}
+\definecolor{clientLabel}{RGB}{50,85,150}
+\definecolor{clusterBorder}{RGB}{50,140,110}
+\definecolor{clusterBg}{RGB}{232,248,240}
+\definecolor{clusterLabel}{RGB}{30,110,85}
+\definecolor{storageBorder}{RGB}{200,140,60}
+\definecolor{storageBg}{RGB}{255,243,228}
+\definecolor{storageLabel}{RGB}{160,110,30}
+\definecolor{workflowBorder}{RGB}{120,100,160}
+\definecolor{workflowBg}{RGB}{245,243,248}
+\definecolor{workflowLabel}{RGB}{90,75,130}
+%
+\begin{tikzpicture}[
+    font=\small\sffamily, % Sans-serif for clean scientific look
+    node distance=0.5cm and 0.4cm,
+    % --- Layer Base ---
+    layerBase/.style={rectangle, rounded corners=4pt, thick, line width=0.8pt},
+    % --- Component Styles ---
+    comp/.style={rectangle, rounded corners=2pt, thick, line width=0.6pt,
+        fill=white, draw=clientBorder, minimum width=2.8cm, minimum height=0.9cm, align=center,
+        drop shadow={shadow xshift=0.4pt, shadow yshift=-0.4pt, fill=black!8}},
+    nodeBox/.style={rectangle, rounded corners=2pt, thick, line width=0.6pt,
+        fill=white, draw=clusterBorder, minimum width=3.2cm, minimum height=1.6cm, align=left,
+        drop shadow={shadow xshift=0.4pt, shadow yshift=-0.4pt, fill=black!8}},
+    storageBox/.style={cylinder, shape border rotate=90, thick, line width=0.6pt,
+        fill=white, draw=storageBorder, minimum width=1.2cm, minimum height=1cm,
+        drop shadow={shadow xshift=0.4pt, shadow yshift=-0.4pt, fill=black!8}},
+    stepBox/.style={rectangle, rounded corners=6pt, line width=0.6pt,
+        draw=workflowBorder, fill=workflowBg, minimum width=2.5cm, minimum height=0.6cm},
+    % --- Arrow Styles ---
+    controlArrow/.style={-{Stealth[scale=0.7]}, color=clientBorder, line width=1pt},
+    dataArrow/.style={{Stealth[scale=0.7]}-{Stealth[scale=0.7]}, color=storageBorder, line width=1pt},
+    flowArrow/.style={-{Stealth[scale=0.6]}, color=workflowBorder, line width=0.9pt},
+    connLine/.style={color=clientBorder, line width=0.7pt, dash pattern=on 3pt off 1.5pt}
+]
+
+    % --- 1. CLIENT LAYER ---
+    \node[layerBase, fill=clientBg, draw=clientBorder, minimum width=13.5cm, minimum height=1.7cm] (CL) at (6.5, 0) {};
+    \node[anchor=north west, font=\footnotesize\bfseries\sffamily, text=clientLabel, xshift=5pt, yshift=-3pt] at (CL.north west) {Client Layer \textnormal{\footnotesize(Local Machine)}};
+
+    \node[comp] (cli)  at (1.5, -0.2)  {\textbf{CLI\,/\,API} \\ \scriptsize\color{black!60} User Interface};
+    \node[comp] (core) at (4.8, -0.2)  {\textbf{Core} \\ \scriptsize\color{black!60} Orchestration};
+    \node[comp] (ssh)  at (8.1, -0.2)  {\textbf{SSH} \\ \scriptsize\color{black!60} Secure Transport};
+    \node[comp] (dock) at (11.4, -0.2) {\textbf{Docker} \\ \scriptsize\color{black!60} Swarm Control};
+
+    \draw[connLine] (cli) -- (core) -- (ssh) -- (dock);
+
+    % --- 2. CLUSTER LAYER ---
+    \node[layerBase, fill=clusterBg, draw=clusterBorder, minimum width=13.5cm, minimum height=2.4cm, below=0.6cm of CL] (CLL) {};
+    \node[anchor=north west, font=\footnotesize\bfseries\sffamily, text=clusterLabel, xshift=5pt, yshift=-3pt] at (CLL.north west) {Cluster Layer \textnormal{\footnotesize(Docker Swarm)}};
+
+    \node[nodeBox] (manager) at (2.1, -2.9) {\textbf{\scriptsize Manager Node} \\ \tiny\color{black!65} $\bullet$~Swarm Orchestration \\ \tiny\color{black!65} $\bullet$~Local Registry \\ \tiny\color{black!65} $\bullet$~NFS Server};
+    \node[nodeBox] (worker)  at (6.5, -2.9) {\textbf{\scriptsize Worker Nodes} \\ \tiny\color{black!65} $\bullet$~GPU Acceleration \\ \tiny\color{black!65} $\bullet$~Method Execution \\ \tiny\color{black!65} $\bullet$~NFS Clients};
+    \node[nodeBox, dashed] (services) at (10.9, -2.9) {\textbf{\scriptsize Dynamic Services} \\ \tiny\color{black!65} $\bullet$~Runtime Containers \\ \tiny\color{black!65} $\bullet$~Resource Isolation \\ \tiny\color{black!65} $\bullet$~Sidecar Monitoring};
+
+    % --- 3. STORAGE LAYER ---
+    \node[layerBase, fill=storageBg, draw=storageBorder, minimum width=13.5cm, minimum height=1.8cm, below=0.6cm of CLL] (SL) {};
+    \node[anchor=north west, font=\footnotesize\bfseries\sffamily, text=storageLabel, xshift=5pt, yshift=-3pt] at (SL.north west) {Shared Storage \textnormal{\footnotesize(NFS)}};
+
+    \node[storageBox] (d1) at (2, -5.7) {};   \node[below=-0.5 of d1, font=\tiny\bfseries\ttfamily, text=storageLabel] {datasets/};
+    \node[storageBox] (d2) at (5, -5.7) {};   \node[below=-0.5 of d2, font=\tiny\bfseries\ttfamily, text=storageLabel] {methods/};
+    \node[storageBox] (d3) at (8, -5.7) {};   \node[below=-0.5 of d3, font=\tiny\bfseries\ttfamily, text=storageLabel] {experiments/};
+    \node[storageBox] (d4) at (11, -5.7) {};  \node[below=-0.5 of d4, font=\tiny\bfseries\ttfamily, text=storageLabel] {libs/};
+
+    % --- 4. LOGICAL WORKFLOW ---
+    \node[anchor=west, font=\scriptsize\bfseries\sffamily, text=workflowLabel] (wfLabel) at (0, -6.8) {Logical Workflow:};
+    \node[stepBox] (s0) at (1.5, -7.5) {\scriptsize\texttt{0.\;setup}};
+    \node[stepBox] (s1) at (4.8, -7.5) {\scriptsize\texttt{1.\;benchmark}};
+    \node[stepBox] (s2) at (8.1, -7.5) {\scriptsize\texttt{2.\;logs}};
+    \node[stepBox] (s3) at (11.4, -7.5) {\scriptsize\texttt{3.\;evaluate}};
+
+    \draw[flowArrow] (s0) -- (s1);
+    \draw[flowArrow] (s1) -- (s2);
+    \draw[flowArrow] (s2) -- (s3);
+
+    % --- INTER-LAYER CONNECTORS ---
+    \draw[controlArrow] (CL.south) -- (CLL.north) node[midway, right, font=\tiny\sffamily, text=clientLabel] {Control (SSH)};
+    \draw[dataArrow] (CLL.south) -- (SL.north) node[midway, right, font=\tiny\sffamily, text=storageLabel] {Data (NFS)};
+
+\end{tikzpicture}
