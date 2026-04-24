@@ -93,7 +93,7 @@
 \maketitle
 
 \begin{abstract}%
-GraFlag is an open-source Python framework for \emph{reproducible} benchmarking of graph anomaly detection (GAD) methods on distributed infrastructure. While existing libraries such as PyGOD provide detection algorithms and benchmarks like BOND define evaluation protocols, reproducibility of reported results remains fragile: no integrated platform combines containerized execution, standardized result formats, and automated evaluation across distributed GPU clusters. GraFlag addresses this gap through a modular architecture built on Docker Swarm with NFS-based shared storage and on-demand dataset fetching from original sources via versioned per-dataset metadata, so that every experiment can be replayed from a single command on a clean checkout. The framework supports detection methods covering static and dynamic graphs, paired with benchmark datasets. Nine standardized result types ensure consistent evaluation regardless of graph type or detection granularity, making results directly comparable across methods and re-runs. GraFlag provides both a command-line interface and a web dashboard for experiment management, real-time monitoring, and automatic generation of evaluation metrics and publication-ready plots. The framework is available at \url{https://github.com/lias-laboratory/graflag} and installable via \texttt{pip install graflag}.
+GraFlag is an open-source Python framework for \emph{reproducible} benchmarking of graph anomaly detection (GAD) methods on distributed infrastructure. Although libraries like PyGOD provide algorithms and benchmarks like BOND define protocols, no integrated platform combines containerized execution, standardized results, and automated evaluation across distributed GPU clusters---leaving reproducibility fragile. GraFlag closes this gap with a modular architecture on Docker Swarm with NFS-based shared storage and on-demand dataset fetching from original sources via versioned per-dataset metadata, so every experiment replays from a single command on a clean checkout. Nine standardized result types make outputs directly comparable across methods and re-runs, covering static and dynamic graphs at node, edge, and graph granularity. A CLI and web dashboard expose experiment management, real-time monitoring, and automatic generation of metrics and publication-ready plots. Available at \url{https://github.com/lias-laboratory/graflag}; installable via \texttt{pip install graflag}.
 \end{abstract}
 
 \begin{keywords}
@@ -161,23 +161,7 @@ writer.finalize()
 \end{pycode}
 \end{figure}
 
-\textbf{Standardized Result Types.} Regardless of the integration pattern, every method must produce results in one of nine standardized formats, defined as the Cartesian product of three granularities (node, edge, graph) and three temporal modes (static, temporal, streaming), as shown in Table~\ref{tab:result_types}.
-
-\begin{table}[!ht]
-\centering
-\caption{Standardized result types. Static: 1D vectors; temporal: 2D matrices (entities $\times$ timestamps); streaming: sparse 1D over continuous timeline.}
-\label{tab:result_types}
-\small
-\begin{tabular}{lccc}
-\toprule
-\textbf{Granularity} & \textbf{Static} & \textbf{Temporal} & \textbf{Streaming} \\
-\midrule
-Node  & \checkmark & 2D matrix & Sparse 1D \\
-Edge  & \checkmark & 2D matrix & Sparse 1D \\
-Graph & \checkmark & 2D matrix & Sparse 1D \\
-\bottomrule
-\end{tabular}
-\end{table}
+\textbf{Standardized Result Types.} Regardless of the integration pattern, every method must produce results in one of nine standardized formats, defined as the Cartesian product of three granularities---node, edge, and graph---and three temporal modes: \emph{static} (1D score vectors), \emph{temporal} (2D matrices indexed by entities~$\times$~timestamps), and \emph{streaming} (sparse 1D scores over a continuous timeline). The same nine-way classification drives the evaluator's metric dispatch.
 
 \textbf{Evaluation.} Once an experiment completes, the \texttt{graflag\_evaluator} computes AUC-ROC, AUC-PR, F1@K, Precision@K, and Recall@K from the standardized results, and generates publication-ready plots. Custom metrics can be added via a plugin system: \texttt{register\_metric()} extracts the function source and persists it as a plugin file on the shared storage, so that the containerized evaluator loads it at runtime (Code~Demo~2).
 
@@ -185,30 +169,23 @@ Graph & \checkmark & 2D matrix & Sparse 1D \\
 \small\textbf{Code Demo 2:} Programmatic batch benchmarking via the Python API.
 \begin{pycode}
 from graflag import GraFlag
-
 # Register a custom metric (persisted as plugin file)
 def hits_at_100(scores, ground_truth, **kw):
     top = scores.argsort()[-100:]
     return {"hits@100": ground_truth[top].mean()}
-
 gf = GraFlag()
-gf.register_metric(
-    "EDGE_STREAM_ANOMALY_SCORES", hits_at_100)
-
+gf.register_metric("EDGE_STREAM_ANOMALY_SCORES", hits_at_100)
 # Run all method/dataset combinations
 for m in gf.list_methods():
     for d in gf.list_datasets():
         exp = gf.run(m.name, d.name, build=True)
         gf.evaluate(exp)
         res = gf.get_evaluation_results(exp)
-        print(f"{m.name}/{d.name}: "
-              f"AUC={res.metrics['auc_roc']:.3f}")
+        print(f"{m.name}/{d.name}: AUC={res.metrics['auc_roc']:.3f}")
 \end{pycode}
 \end{figure}
 
-\textbf{Workflow and Interfaces.} The entire pipeline---from cluster setup through execution to evaluation---is exposed through three interfaces: a CLI (\texttt{graflag setup}, \texttt{graflag run}, \texttt{graflag evaluate}), the Python API shown above, and a web dashboard (\texttt{graflag gui}) with live status badges, log streaming, and one-click evaluation.
-
-\textbf{Reproducibility.} Every experiment persists its full configuration in a JSON file. Any past experiment can be re-executed with \texttt{graflag run -{}-from-config}, with optional parameter overrides.
+\textbf{Workflow, Interfaces, and Reproducibility.} The entire pipeline---from cluster setup through execution to evaluation---is exposed via a CLI (\texttt{graflag setup}, \texttt{graflag run}, \texttt{graflag evaluate}), the Python API shown above, and a web dashboard (\texttt{graflag gui}) with live status badges, log streaming, and one-click evaluation. Every experiment persists its full configuration, so any past run replays with \texttt{graflag run -{}-from-config}.
 
 \section{Quality and Accessibility}
 
@@ -235,7 +212,7 @@ Table~\ref{tab:comparison} compares GraFlag with existing tools for graph anomal
 \centering
 \caption{Feature comparison of GraFlag with related tools. \checkmark\ = supported, $\times$ = not supported, $\circ$ = partial.}
 \label{tab:comparison}
-\footnotesize
+% \footnotesize
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lccccc@{}}
 \toprule
@@ -245,8 +222,8 @@ Data domain        & Graph    & Graph  & Graph  & Time series & Tabular \\
 Dynamic graphs     & \checkmark & $\times$ & $\times$ & --- & --- \\
 Distributed exec.  & \checkmark & $\times$ & $\times$ & \checkmark & $\times$ \\
 Containerized      & \checkmark & $\times$ & $\times$ & \checkmark & $\times$ \\
-GPU scheduling\footnote{Automatic assignment of containers to GPU-enabled worker nodes via Docker Swarm's generic resource scheduler, as opposed to simply using a locally available GPU.}     & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
-Std.\ result types & 9        & 1      & 1      & 1 & 1 \\
+GPU scheduling     & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
+% Std.\ result types & 9        & 1      & 1      & 1 & 1 \\
 Auto.\ evaluation  & \checkmark & $\circ$ & \checkmark & \checkmark & $\circ$ \\
 Web dashboard      & \checkmark & $\times$ & $\times$ & $\circ$ & $\times$ \\
 Config replay      & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
@@ -254,7 +231,7 @@ Plugin metrics     & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-
+% GPU scheduling: Automatic assignment of containers to GPU-enabled worker nodes via Docker Swarm's generic resource scheduler, as opposed to simply using a locally available GPU.
 Key differentiators include: (\emph{i})~GraFlag is the only graph-focused tool with distributed, containerized execution; (\emph{ii})~nine standardized result types cover three granularities across three temporal modes, while other tools support only node-level scores; (\emph{iii})~the plugin-based metric system allows domain-specific evaluation without modifying framework code; and (\emph{iv})~configuration replay via \texttt{service\_config.json} enables exact reproduction of any past experiment.
 
 \section{Shared Storage and Project Structure}
@@ -308,15 +285,13 @@ graflag/
 
 GraFlag supports two integration patterns. This section provides complete examples for each.
 
-\subsection{Pattern A: Custom Training Script}
+\subsection{Pattern A: Custom Methods}
 
-For methods that require a custom training script, three files are needed: a \texttt{.env} configuration, a \texttt{Dockerfile}, and an integration script whose entry point is specified by the \texttt{COMMAND} field.
+For a custom method, two files are needed: a \texttt{.env} configuration, a \texttt{Dockerfile}, and require an entry point \texttt{COMMAND} which is specified by the \texttt{.env} configuration. Defining a new method, needs usually three steps:
 
-\textbf{Step 1: Method configuration (\texttt{.env}).} The \texttt{.env} file defines method metadata and default parameters. Parameters prefixed with an underscore are injected as environment variables into the container. When the container entry point uses the \texttt{-{}-pass-env-args} flag, these variables are converted to command-line arguments (e.g., \texttt{\_MAX\_EPOCH=200} becomes \texttt{-{}-max\_epoch~200}).
+\textbf{Step 1: Method configuration (\texttt{.env}).} The \texttt{.env} file defines method metadata and default parameters. Parameters prefixed with an underscore are injected as environment variables into the container. When the container entry point uses the \texttt{-{}-pass-env-args} flag, these variables are converted to command-line arguments (e.g., \texttt{\_MAX\_EPOCH=200} becomes \texttt{-{}-max\_epoch~200}). The \texttt{COMMAND} field specifies the executable invoked inside the container.
 
-The \texttt{COMMAND} field specifies the executable invoked inside the container.
-
-The optional \texttt{SUPPORTED\_DATASETS} field lists comma-separated patterns used by the web dashboard to filter compatible datasets; wildcards are expanded to regular expressions (e.g., \texttt{bond\_*} matches \texttt{bond\_.*}). This field affects only the dashboard---any method can be run on any dataset via the CLI.
+The optional \texttt{SUPPORTED\_DATASETS} field lists comma-separated patterns used to filter compatible datasets; wildcards are expanded to regular expressions (e.g., \texttt{bond\_*} matches \texttt{bond\_.*}).
 
 \begin{codebox}
 METHOD_NAME=taddy
@@ -444,7 +419,7 @@ GraFlag currently includes 34 benchmark datasets organized into two categories, 
 
 \subsection{Computed Metrics}
 
-The \texttt{graflag\_evaluator} computes the following metrics for all nine result types. For temporal and streaming types, scores are flattened across time steps before metric computation, with support for ragged arrays (snapshots with varying numbers of entities).
+The \texttt{graflag\_evaluator} computes the following metrics for all nine result types. %For temporal and streaming types, scores are flattened across time steps before metric computation, with support for ragged arrays (snapshots with varying numbers of entities).
 
 \begin{itemize}[nosep,leftmargin=*]
 \item \textbf{AUC-ROC}: Area under the Receiver Operating Characteristic curve, measuring discrimination ability across all thresholds.
@@ -471,9 +446,9 @@ Each plugin file imports \texttt{MetricCalculator} and calls \texttt{register\_m
 The evaluator produces three standard plots per experiment, saved as PNG files in the \texttt{eval/} subdirectory:
 
 \begin{itemize}[nosep,leftmargin=*]
-\item \textbf{ROC Curve}: FPR vs.\ TPR with AUC annotation.
-\item \textbf{Precision-Recall Curve}: Recall vs.\ Precision with AUC-PR annotation.
-\item \textbf{Score Distribution}: Overlaid histograms of anomaly scores for normal and anomalous entities.
+\item \textbf{ROC Curve}
+\item \textbf{Precision-Recall Curve}
+\item \textbf{Score Distribution}
 \end{itemize}
 
 Additionally, for each CSV file created by \texttt{ResultWriter.spot()} during training (e.g., \texttt{training.csv}), the evaluator generates training curve plots showing metric evolution over epochs. These plots are visible in the web dashboard (Figure~\ref{fig:dashboard}).
@@ -492,11 +467,11 @@ The web dashboard (\texttt{graflag gui}) provides a browser-based interface for 
 \item \textbf{Experiment History}: List past experiments with status badges, access results and evaluation outputs.
 \end{itemize}
 
-The dashboard communicates with the cluster through the same \texttt{GraFlag} Python API used by the CLI, ensuring consistent behavior. Background threads poll for state changes every two seconds and push updates to connected clients via WebSocket, avoiding page reloads. All long-running operations (build, run, evaluate) execute in background threads to keep the interface responsive.
+The dashboard communicates with the cluster through the same \texttt{GraFlag} Python API used by the CLI, ensuring consistent behavior. Background threads poll for state changes and push updates to connected clients via WebSocket, avoiding page reloads. All long-running operations (build, run, evaluate) execute in background threads to keep the interface responsive.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[height=0.45\textheight]{dashboard.png}
+\includegraphics[height=0.67\textheight]{dashboard.png}
 \caption{GraFlag web dashboard showing the experiment monitoring interface with real-time log streaming and cluster status.}
 \label{fig:dashboard}
 \end{figure}
@@ -505,7 +480,7 @@ The dashboard communicates with the cluster through the same \texttt{GraFlag} Py
 
 GraFlag includes a virtual development cluster (\texttt{graflag devcluster}) that replicates the full distributed environment locally using Docker Compose. This allows users to develop and test methods, debug configurations, and explore the framework without access to physical GPU infrastructure.
 
-The virtual cluster creates five Docker-in-Docker containers (one manager and four workers) on a custom bridge network with fixed IPs, NFS-based shared storage between containers, and SSH connectivity. It mirrors the production architecture: the manager runs a Docker Swarm, a local registry, and an NFS server, while workers join the swarm and mount the shared directory. The cluster is deployed with a single command:
+The virtual cluster creates Docker-in-Docker containers (one manager and workers) on a custom bridge network with fixed IPs, NFS-based shared storage between containers, and SSH connectivity. It mirrors the production architecture: the manager runs a Docker Swarm, a local registry, and an NFS server, while workers join the swarm and mount the shared directory. The cluster is deployed with a single command:
 
 \begin{codebox}
 graflag devcluster --hosts hosts.yml
