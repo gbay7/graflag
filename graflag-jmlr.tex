@@ -67,7 +67,7 @@
 }
 \usepackage{enumitem}
 
-\jmlrheading{27}{2026}{1-\pageref{LastPage}}{4/26}{}{26-0000}{Ahmed Youcef Benhalima, Seif-Eddine Benkabou, Amin Mesmoudi and Allel Hadjali}
+\jmlrheading{27}{2026}{1-\pageref{LastPage}}{5/26}{}{26-0000}{Ahmed Youcef Benhalima, Seif-Eddine Benkabou, Amin Mesmoudi and Allel Hadjali}
 
 \ShortHeadings{GraFlag: Distributed Benchmarking for Graph Anomaly Detection}{Benhalima, Benkabou, Mesmoudi and Hadjali}
 \firstpageno{1}
@@ -473,9 +473,9 @@ The web dashboard (\texttt{graflag gui}) provides a browser-based interface for 
 
 The dashboard communicates with the cluster through the same \texttt{GraFlag} Python API used by the CLI, ensuring consistent behavior. Background threads poll for state changes and push updates to connected clients via WebSocket, avoiding page reloads. All long-running operations (build, run, evaluate) execute in background threads to keep the interface responsive.
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
-\includegraphics[height=0.67\textheight]{dashboard.png}
+\includegraphics[width=\textwidth,height=0.9\textheight,keepaspectratio]{dashboard.png}
 \caption{GraFlag web dashboard showing the experiment monitoring interface with real-time log streaming and cluster status.}
 \label{fig:dashboard}
 \end{figure}
